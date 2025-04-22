@@ -42,6 +42,21 @@ defect-detection-tracking/
    python main.py
    ```
 
+## 📥 Tải Dataset
+
+📦 **Dataset:** MVTec Anomaly Detection (~4.9GB)  
+🔗 Link tải: https://drive.google.com/file/d/1IDCGUf7Xdzks68i3BU5vMk-yXJlvLO7t/view?usp=sharing
+
+**Hướng dẫn:**
+1. Tải file `.tar.xz` ở link trên
+2. Đặt file tại thư mục: dataset trong data
+3. Tại đây ấn giải nén file lần 1, sau đó giải nén thêm lần nữa ở file mới để có cấu trúc thư mục như sau:
+data/dataset/
+├── mvtec_anomaly_detection.tar.xz
+├── bottle/
+├── cable/
+└── ...
+
 ## 🧠 Công nghệ sử dụng
 
 - YOLOv5 (Phát hiện vật thể)
