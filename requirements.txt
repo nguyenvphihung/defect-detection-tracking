@@ -1,0 +1,4 @@
+# Thư viện cần thiết
+opencv-python
+torch
+yolov5

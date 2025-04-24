@@ -1,70 +1,56 @@
+# 🎯 Dự án Theo Dõi Đối Tượng Trên Video - MOTChallenge16
 
-# 🛠️ Hệ thống Phát hiện và Theo dõi Sản phẩm Lỗi Thời gian Thực
+Đây là dự án sử dụng mô hình YOLO và thuật toán DeepSORT để thực hiện bài toán **phát hiện và theo dõi nhiều đối tượng (Multi-Object Tracking)** trên video, sử dụng tập dữ liệu chuẩn **MOTChallenge 2016**.
 
-Dự án nhằm xây dựng một hệ thống **phát hiện và theo dõi sản phẩm lỗi** trong dây chuyền sản xuất công nghiệp bằng cách sử dụng các kỹ thuật học sâu (deep learning), đảm bảo hoạt động **theo thời gian thực**.
+---
 
-## 🎯 Mục tiêu dự án
+## 📌 Mục tiêu dự án
 
-- Phát hiện sản phẩm lỗi bằng mô hình **YOLO**.
-- Theo dõi sản phẩm lỗi qua dây chuyền bằng **DeepSORT**.
-- Phân tích xu hướng lỗi và hiển thị kết quả trực quan.
-- Hệ thống đủ nhẹ để triển khai thực tế trong môi trường công nghiệp.
+- Phát hiện người hoặc đối tượng trong video bằng YOLOv5/YOLOv8
+- Gán ID và theo dõi chuyển động của từng đối tượng bằng DeepSORT
+- Ghi log quá trình tracking (ID, tọa độ, thời gian)
+- Hiển thị kết quả trực quan (bounding box + ID)
+- Thực hiện theo plan 5 tuần, bám sát hướng dẫn của repo tham khảo `boxmot`
 
-## 🧱 Cấu trúc thư mục dự án (gợi ý)
+---
+
+## 📁 Cấu trúc thư mục
 
 ```
 defect-detection-tracking/
-│
-├── data/                  # Dữ liệu (ảnh, nhãn, video)
-├── yolov5/                # Mã nguồn YOLO (detection)
-├── tracking/              # Mã nguồn DeepSORT
-├── utils/                 # Các hàm phụ trợ
-├── main.py                # File chạy chính
-├── requirements.txt       # Danh sách thư viện cần cài
-└── README.md              # Tài liệu này
+├── configs/                  # Cấu hình DeepSORT
+├── data/                     # Nơi chứa dataset 
+├── detectors/yolov5/         # Mã nguồn YOLOv5 (wrapper)
+├── trackers/deep_sort/       # Thuật toán DeepSORT
+├── utils/                    # Hàm hỗ trợ (vẽ box, log,...)
+├── outputs/                  # Kết quả (video, CSV)
+├── main.py                   # Pipeline chính
+├── visualize_gt.py           # Kiểm tra dữ liệu ground truth
+├── requirements.txt          # Thư viện cần cài
+└── README.md                 # File này
 ```
 
-## 🚀 Cách bắt đầu
+> 📦 Dữ liệu `MOT16` KHÔNG đưa vào GitHub → Tự tải về từ (https://motchallenge.net/data/MOT16/)
 
-1. **Clone repo về máy:**
-   ```bash
-   git clone https://github.com/tai-khoan/ten-repo.git
-   cd ten-repo
-   ```
+---
 
-2. **Cài đặt thư viện cần thiết:**
-   ```bash
-   pip install -r requirements.txt
-   ```
+## 🚀 Cách chạy dự án
 
-3. **Chạy thử chương trình đọc video:**
-   ```bash
-   python main.py
-   ```
+1. **Tải dữ liệu MOT16** và đặt vào thư mục:
+```
+data/MOT16/test/MOT16-01...
+data/MOT16/train/MOT16-02...
+```
 
-## 📥 Tải Dataset
+2. **Cài thư viện:**
+```bash
+pip install -r requirements.txt
+```
 
-📦 **Dataset:** MVTec Anomaly Detection (~4.9GB)  
-🔗 Link tải: https://drive.google.com/file/d/1IDCGUf7Xdzks68i3BU5vMk-yXJlvLO7t/view?usp=sharing
+3. **Chạy thử YOLO detect hoặc visualization:**
+```bash
+python visualize_gt.py
+python main.py
+```
 
-**Hướng dẫn:**
-1. Tải file `.tar.xz` ở link trên
-2. Đặt file tại thư mục: dataset trong data
-3. Tại đây ấn giải nén file lần 1, sau đó giải nén thêm lần nữa ở file mới để có cấu trúc thư mục như sau:
-data/dataset/
-├── mvtec_anomaly_detection.tar.xz
-├── bottle/
-├── cable/
-└── ...
-
-## 🧠 Công nghệ sử dụng
-
-- YOLOv5 (Phát hiện vật thể)
-- DeepSORT (Theo dõi đối tượng)
-- OpenCV (Xử lý ảnh và video)
-- Matplotlib, Pandas (Phân tích & trực quan hóa)
-- Python 3.8+
-
-## 📌 Trạng thái
-
-🚧 **Đang triển khai** — Tuần 1: Tìm hiểu, đọc dữ liệu và hiển thị ảnh thử nghiệm.
+---
