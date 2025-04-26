@@ -1,2 +1,21 @@
+# Thư mục dữ liệu
 /data/
 /datasets/
+
+# Thư mục đầu ra
+/outputs/logs/
+/outputs/videos/
+
+# Các file hệ thống
+.DS_Store
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
