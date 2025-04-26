@@ -1,1 +1,12 @@
-# cấu hình cho DeepSORT
+# Cấu hình cho DeepSORT
+
+# Deep cosine metric parameters
+DEEPSORTC:
+  MODEL_TYPE: "osnet_x0_25" # Mô hình CNN cho feature embedding
+  MAX_DIST: 0.2            # Ngưỡng cho cosine distance
+  MIN_CONFIDENCE: 0.3      # Ngưỡng tin cậy để theo dõi đối tượng
+  NMS_MAX_OVERLAP: 0.5     # Ngưỡng cho Non-maximum suppression
+  MAX_IOU_DISTANCE: 0.7    # Ngưỡng IoU tối đa cho bộ lọc
+  MAX_AGE: 70              # Số frame tối đa để đánh dấu đối tượng biến mất
+  N_INIT: 3                # Số frame cần thiết để bắt đầu theo dõi
+  NN_BUDGET: 100           # Số lượng mẫu lưu trữ tối đa
