@@ -13,7 +13,7 @@ import sys
 sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
 
 # Import các module tự viết
-from detectors.yolov5.detect import YOLOv5Detector
+from detectors.yolo_detector import YOLODetector  # Sử dụng YOLODetector mới thay thế cho YOLOv5Detector cũ
 from trackers.deep_sort.deep_sort import DeepSORT
 from utils.drawing import visualize_detections, visualize_tracks
 from utils.file_io import create_output_dirs, create_tracking_log, log_tracking_results
@@ -301,14 +301,23 @@ if __name__ == "__main__":
     args = parse_args()
     
     # Khởi tạo detector
-    print("\n=== Khởi tạo Simple Detector ===\n")
-    detector = YOLOv5Detector(
+    # Kiểm tra có sử dụng ground truth không
+    use_gt = False
+    if os.path.isdir(args.source) and os.path.exists(os.path.join(args.source, "gt")):
+        # Nếu là thư mục MOT16 và có thư mục gt, sử dụng ground truth nếu được yêu cầu
+        use_gt = True
+    
+    print("\n=== Khởi tạo YOLO Detector ===\n")
+    # Khởi tạo YOLODetector mới với đầy đủ tham số
+    detector = YOLODetector(
+        model_name=args.yolo_model,
         conf_thres=args.conf_thres,
-        classes=args.classes
+        classes=args.classes,
+        use_gt=use_gt
     )
     
     # Nếu nguồn dữ liệu là MOT16, thử tải ground truth
-    if os.path.isdir(args.source) and os.path.exists(os.path.join(args.source, "gt")):
+    if use_gt:
         detector.load_gt_if_available(args.source)
     
     # Khởi tạo tracker
