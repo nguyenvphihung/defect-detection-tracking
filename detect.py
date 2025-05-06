@@ -61,21 +61,29 @@ def detect_persons():
         # Phát hiện đối tượng
         results = model(img)
         
-        # Vẽ bounding box
-        img_with_boxes = results.render()[0].copy()  # Thêm .copy() để tạo bản sao có thể ghi
-        
-        # Hiển thị số lượng đối tượng phát hiện được
+        # Lấy thông tin về các đối tượng phát hiện được
         detections = results.xyxy[0].cpu().numpy()
         num_detections = len(detections)
-        cv2.putText(img_with_boxes, f"Số người: {num_detections}", (10, 30), 
-                    cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
         
-        # Lưu ảnh kết quả
+        # Vẽ bounding box
+        img_with_boxes = results.render()[0].copy()
+        
+        # Thêm đoạn resize ảnh chỉ để hiển thị
+        scale_percent = 50  # Tỷ lệ phần trăm của kích thước mới
+        display_width = int(img_with_boxes.shape[1] * scale_percent / 100)
+        display_height = int(img_with_boxes.shape[0] * scale_percent / 100)
+        display_img = cv2.resize(img_with_boxes, (display_width, display_height))
+        
+        # Hiển thị số lượng đối tượng phát hiện được
+        cv2.putText(display_img, f"Số người: {num_detections}", (10, 30), 
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
+        
+        # Lưu ảnh kết quả với kích thước gốc
         output_path = OUTPUT_PATH / img_file
         cv2.imwrite(str(output_path), img_with_boxes)
         
-        # Hiển thị ảnh như video
-        cv2.imshow("YOLOv5 Detection", img_with_boxes)
+        # Hiển thị ảnh đã resize (chỉ hiển thị một cửa sổ)
+        cv2.imshow("YOLOv5 Detection", display_img)
         key = cv2.waitKey(delay)
         if key == 27:  # Nhấn ESC để thoát
             break
