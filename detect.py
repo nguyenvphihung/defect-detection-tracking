@@ -69,25 +69,42 @@ def detect_persons():
         img_with_boxes = results.render()[0].copy()
         
         # Thêm đoạn resize ảnh chỉ để hiển thị
-        scale_percent = 50  # Tỷ lệ phần trăm của kích thước mới
+        scale_percent = 100  # Tăng từ 80% lên 100% kích thước gốc
         display_width = int(img_with_boxes.shape[1] * scale_percent / 100)
         display_height = int(img_with_boxes.shape[0] * scale_percent / 100)
         display_img = cv2.resize(img_with_boxes, (display_width, display_height))
         
-        # Hiển thị số lượng đối tượng phát hiện được
-        cv2.putText(display_img, f"Số người: {num_detections}", (10, 30), 
-                    cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
+        # Điều chỉnh kích thước chữ cho phù hợp với khung hình lớn hơn
+        cv2.putText(display_img, f"Số người: {num_detections}", (25, 50), 
+                    cv2.FONT_HERSHEY_SIMPLEX, 1.5, (0, 255, 0), 3)
         
-        # Lưu ảnh kết quả với kích thước gốc
-        output_path = OUTPUT_PATH / img_file
+        # Tạo cửa sổ có thể điều chỉnh kích thước và đặt kích thước ban đầu
+        cv2.namedWindow("YOLOv5 Detection", cv2.WINDOW_NORMAL)
+        cv2.resizeWindow("YOLOv5 Detection", display_width, display_height)
+        
+        # Hiển thị ảnh đã resize
+        cv2.imshow("YOLOv5 Detection", display_img)
+        
+        # Xóa dòng hiển thị số người trùng lặp
+        
+        # Lưu ảnh kết quả với kích thước gốc và thêm prefix
+        output_filename = f"detected_{img_file}"
+        output_path = OUTPUT_PATH / output_filename
         cv2.imwrite(str(output_path), img_with_boxes)
         
-        # Hiển thị ảnh đã resize (chỉ hiển thị một cửa sổ)
-        cv2.imshow("YOLOv5 Detection", display_img)
         key = cv2.waitKey(delay)
         if key == 27:  # Nhấn ESC để thoát
             break
-        
+        elif key == ord('f'):  # Nhấn 'f' để chuyển đổi chế độ toàn màn hình
+            is_fullscreen = not is_fullscreen  # Đảo trạng thái toàn màn hình
+            if is_fullscreen:
+                cv2.setWindowProperty("YOLOv5 Detection", cv2.WND_PROP_FULLSCREEN, 
+                                    cv2.WINDOW_FULLSCREEN)
+            else:
+                cv2.setWindowProperty("YOLOv5 Detection", cv2.WND_PROP_FULLSCREEN, 
+                                    cv2.WINDOW_NORMAL)
+                cv2.resizeWindow("YOLOv5 Detection", display_width, display_height)
+
         # Hiển thị tiến độ
         if (i + 1) % 10 == 0 or i == len(image_files) - 1:
             print(f"✅ Đã xử lý {i + 1}/{len(image_files)} ảnh")

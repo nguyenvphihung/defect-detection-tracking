@@ -52,5 +52,13 @@ pip install -r requirements.txt
 python visualize_gt.py
 python main.py
 ```
+4. **Chạy phát hiện đối tượng với Yolov5:**
+```bash
+python detect.py
+```
+- Mô hình Yolov5 sẽ được tải tự động và lưu vào thư mục `detectors/yolov5/runs/detect/`
+- Kết quả phát sẽ hiển thị trực tiếp trên màn hình với tỷ lệ 50% kích thước gốc
+- Kết quả sẽ được lưu vào thư mục `outputs/`
+- Nhấn phim ESC để dừng quá trình xử lý.
 
 ---
