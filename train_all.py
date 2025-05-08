@@ -1,3 +1,7 @@
+# File huấn luyện YOLOv5 với dataset MOT16, file ni là file chạy 4 tiếng mấy để train hết dataset MOT16
+# chạy xong ta sẽ được folder runs/mot16_train
+# trong đó có file weights/best.pt là file weights đã train xong
+
 import os
 from pathlib import Path
 

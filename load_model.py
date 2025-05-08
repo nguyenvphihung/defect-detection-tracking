@@ -1,3 +1,4 @@
+#file này Chứa hàm để tải mô hình YOLOv5 (đơn giản là để không phải xử lý lại từ đầu mỗi lần chạy file detect)
 import os
 import torch
 from pathlib import Path

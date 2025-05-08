@@ -62,3 +62,11 @@ python detect.py
 - Nhấn phim ESC để dừng quá trình xử lý.
 
 ---
+
+## Giải thích về các file trong dự án
+
+- detect.py: File này chứa mã nguồn để phát hiện đối tượng trên video sử dụng mô hình YOLOv5.
+- visualize_gt.py: File này chứa mã nguồn để hiển thị các bounding box và ID của các đối tượng trong video.
+- load_model.py: File này chứa mã nguồn để tải mô hình YOLOv5 đã được huấn luyện.
+- train_all.py: File này chứa mã nguồn để huấn luyện mô hình YOLOv5.
+- model_cache.py: File này được thiết kế để tối ưu hóa việc sử dụng bộ nhớ và tốc độ xử lý.
