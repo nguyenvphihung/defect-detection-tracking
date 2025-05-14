@@ -69,4 +69,3 @@ python detect.py
 - visualize_gt.py: File này chứa mã nguồn để hiển thị các bounding box và ID của các đối tượng trong video.
 - load_model.py: File này chứa mã nguồn để tải mô hình YOLOv5 đã được huấn luyện.
 - train_all.py: File này chứa mã nguồn để huấn luyện mô hình YOLOv5.
-- model_cache.py: File này được thiết kế để tối ưu hóa việc sử dụng bộ nhớ và tốc độ xử lý.
