@@ -29,7 +29,24 @@ class YOLODetector:
         # Tải mô hình YOLOv5 
         if not use_gt:
             try:
-                self.model = torch.hub.load('ultralytics/yolov5', model_name, pretrained=True)
+                # Sử dụng force_reload=True và thêm sys.path manipulation để tránh xung đột module
+                import sys
+                # Lưu lại đường dẫn hiện tại
+                original_path = list(sys.path)
+                try:
+                    # Tải YOLOv5 với force_reload để đảm bảo tải lại tất cả các dependencies
+                    self.model = torch.hub.load('ultralytics/yolov5', model_name, pretrained=True, force_reload=True)
+                except Exception as e:
+                    print(f"❌ Lỗi khi tải mô hình YOLOv5 trực tiếp: {e}")
+                    # Thử cách khác - sử dụng pip để cài đặt yolov5
+                    try:
+                        import subprocess
+                        subprocess.check_call([sys.executable, "-m", "pip", "install", "yolov5"])
+                        import yolov5
+                        self.model = yolov5.load(model_name)
+                    except Exception as e2:
+                        print(f"❌ Không thể cài đặt yolov5 qua pip: {e2}")
+                        raise RuntimeError("Không thể tải mô hình YOLOv5. Vui lòng cài đặt thủ công: pip install yolov5")
                 self.model.to(self.device)
                 self.model.eval()
                 
@@ -141,56 +158,95 @@ class YOLODetector:
             detections = self.gt_data[current_frame_id]
             
             # Cho biết số lượng đối tượng được phát hiện
-            if detections:
-                # Chỉ in log debug cho những frame có đối tượng và theo tần suất phù hợp
-                if self.frame_count % 20 == 0 or len(detections) > 5:
-                    print(f"DEBUG DETECTOR (Ground Truth): Đã tìm thấy {len(detections)} đối tượng trong frame {current_frame_id}")
+            if detections and self.frame_count % 20 == 0:
+                print(f"DEBUG DETECTOR (Ground Truth): Đã tìm thấy {len(detections)} đối tượng trong frame {current_frame_id}")
+            
             return detections
-        
-        # 2. Nếu không sử dụng GT, và model YOLOv5 đã được tải thành công
+            
+        # 2. Nếu không sử dụng ground truth hoặc không có ground truth cho frame hiện tại
         if self.model is not None:
-            # Thời gian bắt đầu để tính toán FPS
-            start_time = time.time()
-            
-            # Chuyển frame về định dạng RGB (YOLOv5 cần RGB)
-            rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-            
-            # Inference
-            results = self.model(rgb_frame, size=640)  # size có thể điều chỉnh (640, 1280, ...)
-            
-            # Lấy kết quả
-            detections = []
-            predictions = results.xyxy[0].cpu().numpy()  # Lấy kết quả frame đầu tiên (batch)
-            
-            # Tính thời gian xử lý
-            inference_time = time.time() - start_time
-            if self.frame_count % 20 == 0:  # In FPS mỗi 20 frame
-                fps = 1.0 / inference_time if inference_time > 0 else 0
-                print(f"🔍 YOLOv5 FPS: {fps:.2f}, Inference time: {inference_time*1000:.1f}ms")
-            
-            # Chuyển đổi kết quả thành định dạng [class_id, confidence, [x, y, w, h]]
-            for pred in predictions:
-                x1, y1, x2, y2, conf, class_id = pred
-                class_id = int(class_id)
+            try:
+                # Chuyển frame về định dạng RGB (YOLOv5 cần RGB)
+                rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
                 
-                # Skip nếu dưới ngưỡng tin cậy (mặc dù model đã lọc sơ bộ)
-                if conf < self.conf_thres:
-                    continue
+                # Inference
+                results = self.model(rgb_frame, size=640)  # size có thể điều chỉnh (640, 1280, ...)
+                
+                # Lấy kết quả dưới dạng pandas dataframe
+                predictions = results.pandas().xyxy[0]
+                
+                # Chuyển đổi kết quả thành định dạng [class_id, confidence, [x, y, w, h]]
+                detections = []
+                for _, row in predictions.iterrows():
+                    x1, y1, x2, y2 = row['xmin'], row['ymin'], row['xmax'], row['ymax']
+                    conf = row['confidence']
+                    class_id = row['class']
                     
-                # Chuyển từ [x1, y1, x2, y2] sang [x, y, w, h] - format YOLO sang format MOT
-                x = int(x1)
-                y = int(y1)
-                w = int(x2 - x1)
-                h = int(y2 - y1)
+                    # Chuyển từ [x1, y1, x2, y2] sang [x, y, w, h] - format YOLO sang format MOT
+                    x = int(x1)
+                    y = int(y1)
+                    w = int(x2 - x1)
+                    h = int(y2 - y1)
+                    
+                    detections.append((int(class_id), float(conf), [x, y, w, h]))
                 
-                detections.append((class_id, float(conf), [x, y, w, h]))
-            
-            # Debug info
-            if self.frame_count % 20 == 0 or len(detections) > 5:  # In thông tin mỗi 20 frame hoặc khi có nhiều detections
-                print(f"🔍 YOLOv5: Đã phát hiện {len(detections)} đối tượng trong frame {self.frame_count}")
+                # Debug info
+                if self.frame_count % 20 == 0:
+                    print(f"🔍 YOLOv5: Đã phát hiện {len(detections)} đối tượng trong frame {self.frame_count}")
+                    
+                return detections
                 
-            return detections
+            except Exception as e:
+                print(f"⚠️ Lỗi khi phát hiện đối tượng với YOLOv5: {e}")
+                
+        # 3. Nếu không có model và không có ground truth, thử sử dụng yolo_wrapper
+        if not hasattr(self, 'tried_wrapper') or not self.tried_wrapper:
+            print(f"⚠️ Model YOLO không khả dụng, thử sử dụng yolo_wrapper...")
+            try:
+                # Lưu frame tạm thời
+                import tempfile
+                import os
+                import subprocess
+                import json
+                
+                # Tạo thư mục tạm nếu chưa tồn tại
+                os.makedirs('temp', exist_ok=True)
+                temp_path = os.path.join('temp', f'frame_{self.frame_count}.jpg')
+                
+                # Lưu frame hiện tại
+                cv2.imwrite(temp_path, frame)
+                
+                # Gọi wrapper để phát hiện đối tượng
+                cmd = f"python yolo_wrapper.py --image {temp_path} --model yolov5s --conf {self.conf_thres}"
+                if self.classes is not None:
+                    class_str = ','.join(map(str, self.classes))
+                    cmd += f" --classes {class_str}"
+                
+                # Thực hiện lệnh và lấy kết quả
+                result = subprocess.check_output(cmd, shell=True).decode('utf-8').strip()
+                raw_detections = json.loads(result)
+                
+                # Chuyển đổi kết quả sang định dạng [class_id, confidence, [x,y,w,h]]
+                detections = []
+                for det in raw_detections:
+                    x, y, w, h, conf, class_id = det
+                    detections.append((int(class_id), float(conf), [x, y, w, h]))
+                
+                print(f"✅ Phát hiện thành công {len(detections)} đối tượng với yolo_wrapper")
+                # Đánh dấu đã thử wrapper
+                self.tried_wrapper = True
+                
+                # Xóa file tạm
+                try:
+                    os.remove(temp_path)
+                except:
+                    pass
+                
+                return detections
+            except Exception as e:
+                print(f"⚠️ Lỗi khi sử dụng yolo_wrapper: {e}")
+                self.tried_wrapper = True
         
-        # 3. Nếu không có model và không có ground truth, trả về rỗng
+        # 4. Nếu tất cả các phương pháp đều thất bại, trả về rỗng
         print(f"⚠️ Không có cả model YOLO lẫn ground truth cho frame {frame_id}!")
         return []
