@@ -89,3 +89,6 @@ use_gt = False
 ```
 
 ---
+
+Lệnh chạy với data gt.txt : python3 main.py --source data/MOT16/train/MOT16-02 --display --detection-method ground-truth
+Lệnh chạy với yolo : python3 main.py --source data/MOT16/train/MOT16-02 --display --counter-direction vertical --counter-line 0.1 --detection-method yolo
