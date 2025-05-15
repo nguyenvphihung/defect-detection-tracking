@@ -18,4 +18,5 @@ env/
 venv/
 ENV/
 env.bak/
-venv.bak/
+venv.bak/temp/
+yolov5s.pt
