@@ -15,9 +15,9 @@ sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
 # Import các module tự viết
 from detectors.yolo_detector import YOLODetector  # Sử dụng YOLODetector mới thay thế cho YOLOv5Detector cũ
 from trackers.deep_sort.deep_sort import DeepSORT
-from utils.drawing import visualize_detections, visualize_tracks
-from utils.file_io import create_output_dirs, create_tracking_log, log_tracking_results
-from utils.counter import PersonCounter
+from core_utils.drawing import visualize_detections, visualize_tracks
+from core_utils.file_io import create_output_dirs, create_tracking_log, log_tracking_results
+from core_utils.counter import PersonCounter
 
 def parse_args():
     """Xử lý các tham số dòng lệnh"""
@@ -43,6 +43,13 @@ def parse_args():
                         help='Ngưỡng tin cậy YOLO')
     parser.add_argument('--classes', nargs='+', type=int, default=[0],
                         help='Các class cần lọc (0: người)')
+    parser.add_argument('--use-gt', action='store_true',
+                        help='Sử dụng dữ liệu ground truth nếu có')
+    parser.add_argument('--use-yolo', action='store_true',
+                        help='Ưu tiên sử dụng YOLO ngay cả khi có ground truth')
+    parser.add_argument('--detection-method', type=str, default='auto',
+                        choices=['auto', 'yolo', 'ground-truth', 'both'],
+                        help='Phương pháp phát hiện: auto (tự động), yolo (chỉ dùng YOLO), ground-truth (chỉ dùng GT), both (kết hợp)')
     
     # Tham số DeepSORT
     parser.add_argument('--deepsort-config', type=str, default='configs/deepsort.yaml',
@@ -301,11 +308,43 @@ if __name__ == "__main__":
     args = parse_args()
     
     # Khởi tạo detector
-    # Kiểm tra có sử dụng ground truth không
-    use_gt = False
-    if os.path.isdir(args.source) and os.path.exists(os.path.join(args.source, "gt")):
-        # Nếu là thư mục MOT16 và có thư mục gt, sử dụng ground truth nếu được yêu cầu
+    # Xác định phương pháp phát hiện theo các tham số dòng lệnh
+    gt_available = os.path.isdir(args.source) and os.path.exists(os.path.join(args.source, "gt"))
+    
+    # Xử lý tham số detection-method
+    if args.detection_method == 'auto':
+        # Tự động chọn phương pháp tốt nhất:
+        # - Dùng ground truth nếu có và --use-yolo không được chỉ định
+        # - Dùng YOLO trong các trường hợp khác
+        use_gt = gt_available and not args.use_yolo
+    elif args.detection_method == 'yolo':
+        # Chỉ dùng YOLO
+        use_gt = False
+    elif args.detection_method == 'ground-truth':
+        # Chỉ dùng ground truth nếu có
+        use_gt = gt_available
+        if not gt_available:
+            print(f"\n⚠️ Cảnh báo: Không tìm thấy dữ liệu ground truth trong {args.source}/gt")
+            print("Sẽ sử dụng YOLOv5 thay thế.")
+    elif args.detection_method == 'both':
+        # Sử dụng cả hai (hiện tại chưa hỗ trợ đầy đủ, sẽ sử dụng GT nếu có)
+        use_gt = gt_available
+        print("\nℹ️ Chế độ 'both' hiện tại sẽ ưu tiên dùng ground truth nếu có, ngược lại sẽ dùng YOLO.")
+        
+    # Trường hợp đặc biệt: Nếu chỉ định --use-gt, ưu tiên dùng GT nếu có
+    if args.use_gt and gt_available:
         use_gt = True
+        
+    # Trường hợp đặc biệt: Nếu chỉ định --use-yolo, ưu tiên dùng YOLO
+    if args.use_yolo:
+        use_gt = False
+        
+    # Hiển thị phương pháp được chọn
+    if use_gt:
+        print(f"\nℹ️ Sử dụng dữ liệu GROUND TRUTH từ {args.source}/gt")
+    else:
+        print(f"\nℹ️ Sử dụng mô hình YOLOv5 {args.yolo_model}")
+
     
     print("\n=== Khởi tạo YOLO Detector ===\n")
     # Khởi tạo YOLODetector mới với đầy đủ tham số
